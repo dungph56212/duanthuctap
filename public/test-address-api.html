@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test API Địa chỉ</title>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+</head>
+<body>
+    <h2>Test API Địa chỉ Việt Nam</h2>
+    
+    <div>
+        <label>Tỉnh/Thành phố:</label>
+        <select id="tinh">
+            <option value="">Chọn Tỉnh/Thành phố</option>
+        </select>
+    </div>
+    
+    <div>
+        <label>Quận/Huyện:</label>
+        <select id="quan">
+            <option value="">Chọn Quận/Huyện</option>
+        </select>
+    </div>
+    
+    <div>
+        <label>Phường/Xã:</label>
+        <select id="phuong">
+            <option value="">Chọn Phường/Xã</option>
+        </select>
+    </div>
+    
+    <div id="result"></div>
+
+    <script>
+        $(document).ready(function() {
+            // Lấy tỉnh thành
+            $.getJSON('https://provinces.open-api.vn/api/p/', function(provinces) {
+                console.log('Loaded provinces:', provinces.length);
+                provinces.forEach(function(province) {
+                    $("#tinh").append(`<option value="${province.code}">${province.name}</option>`);
+                });
+            }).fail(function() {
+                $("#result").html('<p style="color: red;">Lỗi: Không thể load API tỉnh thành</p>');
+            });
+
+            // Xử lý khi chọn tỉnh
+            $("#tinh").change(function() {
+                const provinceCode = $(this).val();
+                const provinceName = $(this).find("option:selected").text();
+                
+                $("#quan").html('<option value="">Chọn Quận/Huyện</option>');
+                $("#phuong").html('<option value="">Chọn Phường/Xã</option>');
+                
+                if (provinceCode) {
+                    console.log('Loading districts for:', provinceName);
+                    $.getJSON(`https://provinces.open-api.vn/api/p/${provinceCode}?depth=2`, function(provinceData) {
+                        console.log('Loaded districts:', provinceData.districts.length);
+                        provinceData.districts.forEach(function(district) {
+                            $("#quan").append(`<option value="${district.code}">${district.name}</option>`);
+                        });
+                    });
+                }
+            });
+
+            // Xử lý khi chọn quận
+            $("#quan").change(function() {
+                const districtCode = $(this).val();
+                const districtName = $(this).find("option:selected").text();
+                
+                $("#phuong").html('<option value="">Chọn Phường/Xã</option>');
+                
+                if (districtCode) {
+                    console.log('Loading wards for:', districtName);
+                    $.getJSON(`https://provinces.open-api.vn/api/d/${districtCode}?depth=2`, function(districtData) {
+                        console.log('Loaded wards:', districtData.wards.length);
+                        districtData.wards.forEach(function(ward) {
+                            $("#phuong").append(`<option value="${ward.code}">${ward.name}</option>`);
+                        });
+                    });
+                }
+            });
+
+            // Xử lý khi chọn phường
+            $("#phuong").change(function() {
+                const wardName = $(this).find("option:selected").text();
+                const districtName = $("#quan").find("option:selected").text();
+                const provinceName = $("#tinh").find("option:selected").text();
+                
+                $("#result").html(`
+                    <h3>Địa chỉ đã chọn:</h3>
+                    <p><strong>Tỉnh:</strong> ${provinceName}</p>
+                    <p><strong>Quận:</strong> ${districtName}</p>
+                    <p><strong>Phường:</strong> ${wardName}</p>
+                    <p><strong>Đầy đủ:</strong> ${wardName}, ${districtName}, ${provinceName}</p>
+                `);
+            });
+        });
+    </script>
+</body>
+</html>

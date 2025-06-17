@@ -1,0 +1,74 @@
+🤖 ChatBot AI Setup Instructions
+
+========================================
+
+Để ChatBot hiển thị trên trang client, hãy làm theo các bước sau:
+
+1. CHẠY SETUP DATABASE:
+   - Mở Command Prompt hoặc Terminal
+   - Chuyển đến thư mục project: cd c:\laragon\www\project
+   - Chạy: php setup_chatbot_simple.php
+
+2. HOẶC SETUP THỦ CÔNG:
+   - Tạo bảng chat_messages trong database
+   - Thêm cột sold_count vào bảng products
+
+3. KIỂM TRA CÁC FILE:
+   ✅ public/css/chatbot.css (đã tạo)
+   ✅ public/js/chatbot.js (đã tạo)
+   ✅ app/Http/Controllers/Client/ChatBotController.php (đã có)
+   ✅ routes/web.php (đã thêm routes)
+   ✅ resources/views/client/layouts/app.blade.php (đã include CSS/JS)
+
+4. REFRESH TRANG CLIENT:
+   - Mở trình duyệt
+   - Truy cập trang chủ: http://127.0.0.1:8000/
+   - ChatBot sẽ xuất hiện ở góc phải dưới
+
+5. KIỂM TRA CONSOLE:
+   - Mở Developer Tools (F12)
+   - Xem Console có log "ChatBot initialized successfully!"
+   - Nếu có lỗi, kiểm tra network requests
+
+6. TEST CHATBOT:
+   - Click vào nút chat góc phải dưới
+   - Cửa sổ chat sẽ mở ra
+   - Thử gửi tin nhắn "Xin chào"
+
+========================================
+
+TROUBLESHOOTING:
+
+❌ Nếu ChatBot không hiển thị:
+   - Kiểm tra file CSS/JS đã tải: View Source → tìm chatbot.css và chatbot.js
+   - Xem Console có lỗi JavaScript không
+   - Clear cache trình duyệt (Ctrl+F5)
+
+❌ Nếu không gửi được tin nhắn:
+   - Kiểm tra routes /chat có hoạt động
+   - Xem database có bảng chat_messages chưa
+   - Kiểm tra CSRF token
+
+❌ Nếu có lỗi PHP:
+   - Chạy: php artisan route:list | findstr chat
+   - Kiểm tra ChatBotController có tồn tại
+
+========================================
+
+🎉 SAU KHI SETUP XONG:
+
+ChatBot sẽ có các tính năng:
+- Tìm kiếm sách theo tên, tác giả, thể loại
+- Hiển thị sách bán chạy
+- Hướng dẫn cách đặt hàng
+- Thông tin liên hệ
+- Lưu lịch sử chat
+
+Hãy test các câu hỏi:
+- "Xin chào"
+- "Tìm sách tiểu thuyết"
+- "Sách bán chạy"
+- "Cách đặt hàng"
+- "Liên hệ"
+
+========================================
