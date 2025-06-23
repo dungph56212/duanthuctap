@@ -170,7 +170,7 @@
                             <input type="checkbox" class="form-check-input product-checkbox" value="{{ $product->id }}">
                         </td>                        <td>
                             @if($product->images && count($product->images) > 0)
-                                <img src="{{ $product->images[0] }}" alt="{{ $product->name }}" 
+                                <img src="{{ productImageUrl($product->images[0]) }}" alt="{{ $product->name }}" 
                                      class="rounded" width="60" height="60" style="object-fit: cover;">
                             @else
                                 <div class="bg-light rounded d-flex align-items-center justify-content-center" 

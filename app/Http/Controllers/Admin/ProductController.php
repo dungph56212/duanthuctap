@@ -10,8 +10,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
-{
-    public function index()
+{    public function index()
     {
         $products = Product::with('category')
             ->when(request('search'), function($query) {
@@ -26,7 +25,21 @@ class ProductController extends Controller
 
         $categories = Category::orderBy('name')->get();
         
-        return view('admin.products.index', compact('products', 'categories'));
+        // Product statistics
+        $stats = [
+            'total' => Product::count(),
+            'active' => Product::where('is_active', true)->count(),
+            'low_stock' => Product::where('manage_stock', true)
+                ->where('stock', '<=', 10)
+                ->where('is_active', true)
+                ->count(),
+            'out_of_stock' => Product::where('manage_stock', true)
+                ->where('stock', 0)
+                ->where('is_active', true)
+                ->count(),
+        ];
+        
+        return view('admin.products.index', compact('products', 'categories', 'stats'));
     }
 
     public function create()
@@ -74,12 +87,23 @@ class ProductController extends Controller
 
         return redirect()->route('admin.products.index')
             ->with('success', 'Sản phẩm đã được tạo thành công!');
-    }
-
-    public function show(Product $product)
+    }    public function show(Product $product)
     {
-        $product->load('category', 'reviews.user', 'orderItems');
-        return view('admin.products.show', compact('product'));
+        $product->load('category', 'reviews.user', 'orderItems.order.user');
+        
+        // Get recent orders containing this product
+        $recentOrders = $product->orderItems()
+            ->with(['order.user'])
+            ->latest()
+            ->take(10)
+            ->get()
+            ->map(function ($orderItem) {
+                return $orderItem->order;
+            })
+            ->unique('id')
+            ->sortByDesc('created_at');
+        
+        return view('admin.products.show', compact('product', 'recentOrders'));
     }
 
     public function edit(Product $product)
@@ -242,7 +266,43 @@ class ProductController extends Controller
             }
             fclose($file);
         };
+          return response()->stream($callback, 200, $headers);
+    }
+
+    public function removeImage(Product $product, $index)
+    {
+        $images = $product->images ?? [];
         
-        return response()->stream($callback, 200, $headers);
+        if (isset($images[$index])) {
+            // Remove image from array
+            unset($images[$index]);
+            // Re-index array
+            $images = array_values($images);
+            
+            // Update product
+            $product->update(['images' => $images]);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Ảnh đã được xóa thành công!'
+            ]);
+        }
+          return response()->json([
+            'success' => false,
+            'message' => 'Không tìm thấy ảnh để xóa!'
+        ], 404);
+    }
+
+    public function duplicate(Product $product)
+    {
+        $newProduct = $product->replicate();
+        $newProduct->sku = $product->sku . '_copy_' . rand(1000, 9999);
+        $newProduct->name = $product->name . ' (Bản sao)';
+        $newProduct->slug = Str::slug($newProduct->name . '-' . rand(1000, 9999));
+        $newProduct->is_active = false; // Set as inactive by default
+        $newProduct->save();
+
+        return redirect()->route('admin.products.edit', $newProduct)
+            ->with('success', 'Sản phẩm đã được nhân bản thành công!');
     }
 }

@@ -179,25 +179,14 @@
                 <div class="card-header">
                     <h5 class="mb-0">Hình ảnh sản phẩm</h5>
                 </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <label for="image" class="form-label">Hình ảnh chính</label>
-                        <input type="file" class="form-control @error('image') is-invalid @enderror" 
-                               id="image" name="image" accept="image/*">
-                        @error('image')
+                <div class="card-body">                    <div class="mb-3">
+                        <label for="images" class="form-label">Hình ảnh sản phẩm</label>
+                        <input type="file" class="form-control @error('images.*') is-invalid @enderror" 
+                               id="images" name="images[]" accept="image/*" multiple>
+                        @error('images.*')
                         <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
-                        <div class="form-text">Chỉ chấp nhận file: jpeg, png, jpg, gif. Tối đa 2MB.</div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="gallery" class="form-label">Thư viện ảnh</label>
-                        <input type="file" class="form-control @error('gallery') is-invalid @enderror" 
-                               id="gallery" name="gallery[]" accept="image/*" multiple>
-                        @error('gallery')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                        <div class="form-text">Có thể chọn nhiều ảnh cùng lúc. Tối đa 10 ảnh, mỗi ảnh tối đa 2MB.</div>
+                        <div class="form-text">Có thể chọn nhiều ảnh cùng lúc. Chỉ chấp nhận file: jpeg, png, jpg, gif. Tối đa 2MB mỗi ảnh.</div>
                     </div>
 
                     <!-- Preview area -->
@@ -344,8 +333,8 @@ document.getElementById('name').addEventListener('input', function() {
 });
 
 // Image preview
-document.getElementById('image').addEventListener('change', function() {
-    previewImage(this, 'main-image-preview');
+document.getElementById('images').addEventListener('change', function() {
+    previewImages(this, 'image-preview');
 });
 
 document.getElementById('gallery').addEventListener('change', function() {

@@ -23,11 +23,9 @@
                 <h5 class="mb-0">Thông tin sản phẩm</h5>
             </div>
             <div class="card-body">
-                <div class="row">
-                    <div class="col-md-4">
-                        @if($product->image)
-                            <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}" 
-                                 class="img-fluid rounded mb-3">
+                <div class="row">                    <div class="col-md-4">                        @if($product->images && count($product->images) > 0)
+                            <img src="{{ productImageUrl($product->images[0]) }}" alt="{{ $product->name }}" 
+                                 class="img-fluid rounded mb-3" id="main-image">
                         @else
                             <div class="bg-light rounded d-flex align-items-center justify-content-center mb-3" 
                                  style="height: 300px;">
@@ -35,14 +33,23 @@
                             </div>
                         @endif
 
-                        @if($product->gallery && count($product->gallery) > 0)
+                        @if($product->images && count($product->images) > 1)
+                        <div class="row">                            @foreach($product->images as $index => $image)
+                            <div class="col-3 mb-2">
+                                <img src="{{ productImageUrl($image) }}" alt="Gallery {{ $index + 1 }}" 
+                                     class="img-fluid rounded" style="height: 60px; object-fit: cover; cursor: pointer;"
+                                     onclick="changeMainImage('{{ productImageUrl($image) }}')">
+                            </div>
+                            @endforeach
+                        </div>                        @elseif($product->gallery && count($product->gallery) > 0)
                         <div class="row">
                             @foreach($product->gallery as $image)
-                            <div class="col-3 mb-2">
-                                <img src="{{ asset('storage/' . $image) }}" alt="Gallery" 
-                                     class="img-fluid rounded" style="height: 60px; object-fit: cover; cursor: pointer;"
-                                     onclick="changeMainImage('{{ asset('storage/' . $image) }}')">
-                            </div>
+                                @if(is_string($image) && !empty($image))                                <div class="col-3 mb-2">
+                                    <img src="{{ productImageUrl($image) }}" alt="Gallery" 
+                                         class="img-fluid rounded" style="height: 60px; object-fit: cover; cursor: pointer;"
+                                         onclick="changeMainImage('{{ productImageUrl($image) }}')">
+                                </div>
+                                @endif
                             @endforeach
                         </div>
                         @endif
@@ -419,7 +426,7 @@
 <script>
 // Change main product image
 function changeMainImage(imageSrc) {
-    const mainImage = document.querySelector('.col-md-4 img:first-child');
+    const mainImage = document.getElementById('main-image');
     if (mainImage) {
         mainImage.src = imageSrc;
     }

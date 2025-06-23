@@ -11,9 +11,7 @@ class AuthController extends Controller
     public function showLoginForm()
     {
         return view('admin.auth.login');
-    }
-
-    public function login(Request $request)
+    }    public function login(Request $request)
     {
         $request->validate([
             'email' => 'required|email',
@@ -23,15 +21,17 @@ class AuthController extends Controller
         $credentials = $request->only('email', 'password');
         $remember = $request->boolean('remember');
 
-        if (Auth::attempt($credentials, $remember)) {
-            $user = Auth::user();
+        // Sử dụng guard admin
+        if (Auth::guard('admin')->attempt($credentials, $remember)) {
+            $user = Auth::guard('admin')->user();
             
+            // Kiểm tra user có phải admin không
             if ($user->is_admin) {
                 $request->session()->regenerate();
                 return redirect()->intended(route('admin.dashboard'))
-                    ->with('success', 'Đăng nhập thành công!');
+                    ->with('success', 'Đăng nhập admin thành công!');
             } else {
-                Auth::logout();
+                Auth::guard('admin')->logout();
                 return back()->withErrors([
                     'email' => 'Bạn không có quyền truy cập trang admin.',
                 ]);
@@ -41,15 +41,13 @@ class AuthController extends Controller
         return back()->withErrors([
             'email' => 'Thông tin đăng nhập không chính xác.',
         ]);
-    }
-
-    public function logout(Request $request)
+    }    public function logout(Request $request)
     {
-        Auth::logout();
+        Auth::guard('admin')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
         return redirect()->route('admin.login')
-            ->with('success', 'Đăng xuất thành công!');
+            ->with('success', 'Đăng xuất admin thành công!');
     }
 }

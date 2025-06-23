@@ -39,8 +39,7 @@
         @csrf
         <div class="row">
             <!-- Customer Information -->
-            <div class="col-lg-8">
-                <!-- Shipping Information -->
+            <div class="col-lg-8">                <!-- Shipping Information -->
                 <div class="card border-0 shadow-sm mb-4">
                     <div class="card-header bg-white border-0 py-3">
                         <h5 class="mb-0">
@@ -49,55 +48,48 @@
                         </h5>
                     </div>
                     <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="name" class="form-label">Họ và tên <span class="text-danger">*</span></label>
-                                <input type="text" 
-                                       class="form-control @error('name') is-invalid @enderror" 
-                                       id="name" 
-                                       name="name" 
-                                       value="{{ old('name', auth()->user()->name ?? '') }}" 
-                                       required>
-                                @error('name')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
+                        <!-- Email Field (standalone) -->
+                        <div class="mb-4">
+                            <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-envelope"></i></span>
                                 <input type="email" 
                                        class="form-control @error('email') is-invalid @enderror" 
                                        id="email" 
                                        name="email" 
                                        value="{{ old('email', auth()->user()->email ?? '') }}" 
+                                       placeholder="your@email.com"
                                        required>
-                                @error('email')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
                             </div>
-                        </div>                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="phone" class="form-label">Số điện thoại <span class="text-danger">*</span></label>
-                                <input type="tel" 
-                                       class="form-control @error('phone') is-invalid @enderror" 
-                                       id="phone" 
-                                       name="phone" 
-                                       value="{{ old('phone') }}" 
-                                       required>
-                                @error('phone')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="tinh" class="form-label">Tỉnh/Thành phố <span class="text-danger">*</span></label>
-                                <select class="form-select @error('city') is-invalid @enderror" id="tinh" name="city" required>
-                                    <option value="">Chọn Tỉnh/Thành phố</option>
-                                </select>
-                                <input type="hidden" id="ten_tinh" name="ten_tinh">
-                                @error('city')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
+                            @error('email')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <!-- Enhanced Address Form Component -->
+                        @component('components.enhanced-address-form', [
+                            'prefix' => 'shipping_',
+                            'defaultName' => auth()->user()->name ?? '',
+                            'defaultPhone' => auth()->user()->phone ?? '',
+                            'existingAddresses' => $addresses ?? collect(),
+                            'showSaveOption' => auth()->check()
+                        ])
+                        @endcomponent
+
+                        <!-- Order Notes -->
+                        <div class="mt-4">
+                            <label for="notes" class="form-label">Ghi chú đơn hàng</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-sticky-note"></i></span>
+                                <textarea class="form-control" 
+                                          id="notes" 
+                                          name="notes" 
+                                          rows="3" 
+                                          placeholder="Ghi chú về đơn hàng, yêu cầu đặc biệt (tùy chọn)">{{ old('notes') }}</textarea>
                             </div>
                         </div>
+                    </div>
+                </div>
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="quan" class="form-label">Quận/Huyện <span class="text-danger">*</span></label>
@@ -416,8 +408,67 @@
 @endpush
 
 @push('scripts')
+<script src="{{ asset('js/address-form.js') }}"></script>
+<script src="{{ asset('js/enhanced-address-form.js') }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize enhanced address form with shipping prefix
+    const addressHandler = new EnhancedAddressFormHandler('shipping_');
+    
+    // Enhanced checkout form validation
+    const checkoutForm = document.getElementById('checkout-form');
+    if (checkoutForm) {
+        checkoutForm.addEventListener('submit', function(e) {
+            // Validate address form
+            const addressValidation = addressHandler.validateForm();
+            
+            // Validate email
+            const emailField = document.getElementById('email');
+            const emailValid = emailField && emailField.value && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailField.value);
+            
+            // Validate payment method
+            const paymentMethod = document.querySelector('input[name="payment_method"]:checked');
+            
+            const errors = [];
+            
+            if (!emailValid) {
+                errors.push('Email không hợp lệ');
+                if (emailField) emailField.classList.add('is-invalid');
+            }
+            
+            if (!paymentMethod) {
+                errors.push('Vui lòng chọn phương thức thanh toán');
+            }
+            
+            if (!addressValidation.isValid) {
+                errors.push(...addressValidation.errors);
+            }
+            
+            if (errors.length > 0) {
+                e.preventDefault();
+                
+                // Show errors with alert
+                showToast(errors.join('<br>'), 'error');
+                
+                // Focus on first invalid field
+                const firstInvalid = checkoutForm.querySelector('.is-invalid');
+                if (firstInvalid) {
+                    firstInvalid.focus();
+                    firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+                
+                return false;
+            }
+            
+            // Show loading on submit
+            const submitBtn = checkoutForm.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Đang xử lý...';
+                submitBtn.disabled = true;
+            }
+        });
+    }
+
     // Toast notification function
     function showToast(message, type = 'info') {
         const toastHtml = `
@@ -456,6 +507,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (!couponCode) {
             resultDiv.innerHTML = '<div class="alert alert-warning alert-sm">Vui lòng nhập mã giảm giá</div>';
+            return;
+        }
             return;
         }
 

@@ -15,11 +15,13 @@ class AdminMiddleware
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */    public function handle(Request $request, Closure $next): Response
     {
-        if (!Auth::check()) {
-            return redirect()->route('admin.login')->with('error', 'Vui lòng đăng nhập để truy cập trang admin.');
+        // Kiểm tra admin guard
+        if (!Auth::guard('admin')->check()) {
+            return redirect()->route('admin.login')->with('error', 'Vui lòng đăng nhập admin để truy cập.');
         }
 
-        if (!Auth::user()->is_admin) {
+        // Kiểm tra quyền admin
+        if (!Auth::guard('admin')->user()->is_admin) {
             abort(403, 'Bạn không có quyền truy cập trang admin.');
         }
 

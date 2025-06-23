@@ -11,10 +11,9 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
 class AuthController extends Controller
-{
-    public function showLoginForm()
+{    public function showLoginForm()
     {
-        if (Auth::check()) {
+        if (Auth::guard('web')->check()) {
             return redirect()->route('client.home');
         }
         
@@ -23,14 +22,12 @@ class AuthController extends Controller
 
     public function showRegisterForm()
     {
-        if (Auth::check()) {
+        if (Auth::guard('web')->check()) {
             return redirect()->route('client.home');
         }
         
         return view('client.auth.register');
-    }
-
-    public function login(Request $request)
+    }public function login(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'email' => 'required|email',
@@ -50,26 +47,29 @@ class AuthController extends Controller
 
         $credentials = $request->only('email', 'password');
         
-        if (Auth::attempt($credentials, $request->filled('remember'))) {
+        // Sử dụng web guard cho client
+        if (Auth::guard('web')->attempt($credentials, $request->filled('remember'))) {
             $request->session()->regenerate();
             
-            $user = Auth::user();
+            $user = Auth::guard('web')->user();
             
             // Kiểm tra nếu user bị khóa
             if (!$user->is_active) {
-                Auth::logout();
+                Auth::guard('web')->logout();
                 return back()->withErrors([
                     'email' => 'Tài khoản của bạn đã bị khóa. Vui lòng liên hệ admin.',
                 ])->withInput($request->only('email'));
             }
             
-            // Redirect admin về trang admin
+            // Chặn admin đăng nhập vào client
             if ($user->is_admin) {
-                return redirect()->route('admin.dashboard')
-                    ->with('success', 'Chào mừng bạn đến với trang quản trị!');
+                Auth::guard('web')->logout();
+                return back()->withErrors([
+                    'email' => 'Tài khoản admin không thể đăng nhập vào trang client. Vui lòng sử dụng trang admin.',
+                ])->withInput($request->only('email'));
             }
             
-            // Redirect user thường về trang chủ client
+            // Chỉ redirect user thường về trang chủ client
             $intended = $request->session()->pull('url.intended', route('client.home'));
             return redirect($intended)
                 ->with('success', 'Đăng nhập thành công!');
@@ -114,10 +114,8 @@ class AuthController extends Controller
                 'is_admin' => false,
                 'is_active' => true,
                 'email_verified_at' => now(), // Tự động verify email
-            ]);
-
-            // Đăng nhập luôn sau khi đăng ký
-            Auth::login($user);
+            ]);            // Đăng nhập luôn sau khi đăng ký (chỉ cho user thường)
+            Auth::guard('web')->login($user);
 
             return redirect()->route('client.home')
                 ->with('success', 'Đăng ký thành công! Chào mừng bạn đến với BookStore!');
@@ -127,36 +125,32 @@ class AuthController extends Controller
                 ->withErrors(['email' => 'Có lỗi xảy ra. Vui lòng thử lại.'])
                 ->withInput($request->except('password', 'password_confirmation'));
         }
-    }
-
-    public function logout(Request $request)
+    }    public function logout(Request $request)
     {
-        Auth::logout();
+        Auth::guard('web')->logout();
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
         return redirect()->route('client.home')
             ->with('success', 'Đăng xuất thành công!');
-    }
-
-    public function profile()
+    }    public function profile()
     {
-        if (!Auth::check()) {
+        if (!Auth::guard('web')->check()) {
             return redirect()->route('client.login');
         }
 
-        $user = Auth::user();
+        $user = Auth::guard('web')->user();
         return view('client.auth.profile', compact('user'));
     }
 
     public function updateProfile(Request $request)
     {
-        if (!Auth::check()) {
+        if (!Auth::guard('web')->check()) {
             return redirect()->route('client.login');
         }
 
-        $user = Auth::user();
+        $user = Auth::guard('web')->user();
 
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',

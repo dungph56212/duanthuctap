@@ -10,31 +10,16 @@ use App\Models\Category;
 use App\Models\Coupon;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
-{    public function index()
+{    
+    public function index()
     {
-        // FORCE DEBUG OUTPUT
-        echo "<div style='background: red; color: white; padding: 10px; margin: 10px; font-size: 18px; border: 3px solid yellow;'>DASHBOARD CONTROLLER EXECUTED!</div>";
-        
         // Debug logging
         Log::info('Dashboard controller called');
-          // Test raw SQL queries to debug
-        $totalOrdersRaw = DB::table('orders')->count();
-        $pendingOrdersRaw = DB::table('orders')->where('status', 'pending')->count();
-        $deliveredOrdersRaw = DB::table('orders')->where('status', 'delivered')->count();
-        $revenueRaw = DB::table('orders')->where('payment_status', 'paid')->sum('total_amount');
         
-        Log::info('Raw SQL results:', [
-            'total_orders' => $totalOrdersRaw,
-            'pending_orders' => $pendingOrdersRaw,
-            'delivered_orders' => $deliveredOrdersRaw,
-            'revenue' => $revenueRaw
-        ]);
-        
-        // Statistics
+        // Basic Statistics
         $totalUsers = User::count();
         $totalProducts = Product::count();
         $totalOrders = Order::count();
@@ -56,12 +41,13 @@ class DashboardController extends Controller
                 ->whereYear('created_at', now()->year)
                 ->count(),
         ];
-          // Order statistics - using raw SQL values for debugging
+        
+        // Order statistics
         $orderStats = [
-            'total' => $totalOrdersRaw,
-            'pending' => $pendingOrdersRaw,
-            'delivered' => $deliveredOrdersRaw,
-            'total_revenue' => $revenueRaw,
+            'total' => Order::count(),
+            'pending' => Order::where('status', 'pending')->count(),
+            'delivered' => Order::where('status', 'delivered')->count(),
+            'total_revenue' => Order::where('payment_status', 'paid')->sum('total_amount'),
         ];
         
         Log::info('Order stats calculated', $orderStats);
@@ -81,6 +67,16 @@ class DashboardController extends Controller
                 ->count(),
         ];
         
+        // Coupon statistics
+        $couponStats = [
+            'total' => Coupon::count(),
+            'active' => Coupon::where('is_active', true)->count(),
+            'used' => Coupon::where('used_count', '>', 0)->count(),
+            'total_savings' => Order::where('payment_status', 'paid')
+                ->whereNotNull('discount_amount')
+                ->sum('discount_amount'),
+        ];
+        
         // Revenue statistics
         $todayRevenue = Order::where('payment_status', 'paid')
             ->whereDate('created_at', today())
@@ -93,7 +89,9 @@ class DashboardController extends Controller
             
         $yearRevenue = Order::where('payment_status', 'paid')
             ->whereYear('created_at', now()->year)
-            ->sum('total_amount');// Recent orders
+            ->sum('total_amount');
+
+        // Recent orders
         $recentOrders = Order::with('user')
             ->latest()
             ->take(10)
@@ -119,15 +117,11 @@ class DashboardController extends Controller
                 'month' => $date->format('M Y'),
                 'revenue' => $revenue
             ];
-        }        // Coupon statistics
-        $couponStats = [
-            'total' => Coupon::count(),
-            'active' => Coupon::where('is_active', true)->count(),
-            'used' => Coupon::where('used_count', '>', 0)->count(),
-            'total_savings' => Order::where('payment_status', 'paid')
-                ->whereNotNull('discount_amount')
-                ->sum('discount_amount'),
-        ];return view('admin.dashboard', compact(
+        }
+
+        Log::info('All stats calculated, returning view');
+
+        return view('admin.dashboard', compact(
             'totalUsers',
             'totalProducts', 
             'totalOrders',
@@ -135,13 +129,13 @@ class DashboardController extends Controller
             'userStats',
             'orderStats',
             'productStats',
+            'couponStats',
             'todayRevenue',
             'monthRevenue',
             'yearRevenue',
             'recentOrders',
             'lowStockProducts',
-            'monthlyRevenue',
-            'couponStats'
+            'monthlyRevenue'
         ));
     }
 }

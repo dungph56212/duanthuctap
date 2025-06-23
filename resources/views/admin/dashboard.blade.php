@@ -3,7 +3,42 @@
 @section('title', 'Dashboard')
 @section('page-title', 'Dashboard')
 
+@section('styles')
+<style>
+.bg-purple {
+    background-color: #6f42c1 !important;
+}
+.stats-card {
+    transition: transform 0.2s;
+}
+.stats-card:hover {
+    transform: translateY(-2px);
+}
+.card {
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+</style>
+@endsection
+
 @section('content')
+<!-- DEBUG - Remove this after fixing -->
+<div style="background: #f0f0f0; padding: 10px; margin: 10px 0; border: 1px solid #ccc;">
+    <h5>DEBUG INFO:</h5>
+    <p>Order Stats: 
+        Total: {{ $orderStats['total'] ?? 'NOT SET' }}, 
+        Pending: {{ $orderStats['pending'] ?? 'NOT SET' }}, 
+        Delivered: {{ $orderStats['delivered'] ?? 'NOT SET' }}, 
+        Revenue: {{ $orderStats['total_revenue'] ?? 'NOT SET' }}
+    </p>
+    <p>User Stats: 
+        Total: {{ $userStats['total'] ?? 'NOT SET' }}, 
+        Customers: {{ $userStats['customers'] ?? 'NOT SET' }}, 
+        Admins: {{ $userStats['admins'] ?? 'NOT SET' }}
+    </p>
+</div>
+<!-- END DEBUG -->
+
 <!-- Stats Cards -->
 <div class="row mb-4">
     <div class="col-md-3 mb-3">
@@ -28,7 +63,7 @@
                 <div class="d-flex justify-content-between">
                     <div>
                         <h6 class="card-title text-muted">Tổng sản phẩm</h6>
-                        <h3 class="mb-0">{{ number_format($totalProducts) }}</h3>
+                        <h3 class="mb-0">{{ number_format($productStats['total']) }}</h3>
                     </div>
                     <div class="text-success">
                         <i class="fas fa-box fa-2x"></i>
@@ -71,6 +106,134 @@
     </div>
 </div>
 
+<!-- Coupon Stats -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-purple text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Tổng mã giảm giá</h6>
+                        <h3 class="mb-0">{{ number_format($couponStats['total'] ?? 0) }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-tags fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Đang hoạt động</h6>
+                        <h3 class="mb-0">{{ number_format($couponStats['active'] ?? 0) }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-check-circle fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Đã sử dụng</h6>
+                        <h3 class="mb-0">{{ number_format($couponStats['used'] ?? 0) }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-receipt fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Tiết kiệm</h6>
+                        <h3 class="mb-0">{{ number_format($couponStats['total_savings'] ?? 0) }}đ</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-money-bill-wave fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Product Stats -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Đang hoạt động</h6>
+                        <h3 class="mb-0">{{ $productStats['active'] ?? 0 }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-check-circle fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-secondary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Không hoạt động</h6>
+                        <h3 class="mb-0">{{ $productStats['inactive'] ?? 0 }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-pause-circle fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Sắp hết hàng</h6>
+                        <h3 class="mb-0">{{ $productStats['low_stock'] ?? 0 }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-exclamation-triangle fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-danger text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Hết hàng</h6>
+                        <h3 class="mb-0">{{ $productStats['out_of_stock'] ?? 0 }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-times-circle fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Revenue Stats -->
 <div class="row mb-4">
     <div class="col-md-4 mb-3">
@@ -101,10 +264,137 @@
     </div>
 </div>
 
-<!-- Charts and Tables Row -->
-<div class="row">
-    <!-- Revenue Chart -->
-    <div class="col-md-8 mb-4">
+<!-- Order Stats -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Tổng đơn hàng</h6>
+                        <h3 class="mb-0">{{ number_format($orderStats['total'] ?? 0) }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-shopping-cart fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Chờ xử lý</h6>
+                        <h3 class="mb-0">{{ number_format($orderStats['pending'] ?? 0) }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-clock fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Đã giao</h6>
+                        <h3 class="mb-0">{{ number_format($orderStats['delivered'] ?? 0) }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-check-circle fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Doanh thu</h6>
+                        <h3 class="mb-0">{{ number_format($orderStats['total_revenue'] ?? 0) }}đ</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-money-bill-wave fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- User Stats -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Tổng người dùng</h6>
+                        <h3 class="mb-0">{{ number_format($userStats['total'] ?? 0) }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-users fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Khách hàng</h6>
+                        <h3 class="mb-0">{{ number_format($userStats['customers'] ?? 0) }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-user fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-danger text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Admin</h6>
+                        <h3 class="mb-0">{{ number_format($userStats['admins'] ?? 0) }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-user-shield fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Đăng ký tháng này</h6>
+                        <h3 class="mb-0">{{ number_format($userStats['this_month'] ?? 0) }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-user-plus fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Revenue Chart -->
+<div class="row mb-4">
+    <div class="col-md-8">
         <div class="card">
             <div class="card-header">
                 <h6 class="mb-0">Doanh thu 12 tháng gần đây</h6>
@@ -116,7 +406,7 @@
     </div>
     
     <!-- Low Stock Products -->
-    <div class="col-md-4 mb-4">
+    <div class="col-md-4">
         <div class="card">
             <div class="card-header">
                 <h6 class="mb-0">Sản phẩm sắp hết hàng</h6>

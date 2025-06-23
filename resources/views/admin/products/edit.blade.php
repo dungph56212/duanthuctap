@@ -198,57 +198,37 @@
             <div class="card mb-4">
                 <div class="card-header">
                     <h5 class="mb-0">Hình ảnh sản phẩm</h5>
-                </div>
-                <div class="card-body">
-                    @if($product->image)
+                </div>                <div class="card-body">
+                    @if($product->images && count($product->images) > 0)
                     <div class="mb-3">
-                        <label class="form-label">Hình ảnh hiện tại:</label><br>
-                        <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}" 
-                             class="img-thumbnail" style="max-width: 200px;">
-                    </div>
-                    @endif
-
-                    <div class="mb-3">
-                        <label for="image" class="form-label">Hình ảnh chính</label>
-                        <input type="file" class="form-control @error('image') is-invalid @enderror" 
-                               id="image" name="image" accept="image/*">
-                        @error('image')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                        <div class="form-text">Chỉ chấp nhận file: jpeg, png, jpg, gif. Tối đa 2MB.</div>
-                    </div>
-
-                    @if($product->gallery && count($product->gallery) > 0)
-                    <div class="mb-3">
-                        <label class="form-label">Thư viện ảnh hiện tại:</label>
+                        <label class="form-label">Hình ảnh hiện tại:</label>
                         <div class="row">
-                            @foreach($product->gallery as $index => $image)
-                            <div class="col-md-3 mb-2">
-                                <div class="position-relative">
-                                    <img src="{{ asset('storage/' . $image) }}" alt="Gallery {{ $index + 1 }}" 
-                                         class="img-thumbnail w-100" style="height: 100px; object-fit: cover;">
-                                    <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0"
-                                            onclick="removeGalleryImage({{ $index }})">
-                                        <i class="fas fa-times"></i>
-                                    </button>
+                            @foreach($product->images as $index => $image)
+                                @if(is_string($image) && !empty($image))
+                                <div class="col-md-3 mb-2">
+                                    <div class="position-relative">                                        <img src="{{ productImageUrl($image) }}" alt="{{ $product->name }} - {{ $index + 1 }}" 
+                                             class="img-thumbnail w-100" style="height: 150px; object-fit: cover;">
+                                        <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0"
+                                                onclick="removeProductImage({{ $index }})">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
+                                @endif
                             @endforeach
                         </div>
                     </div>
                     @endif
 
                     <div class="mb-3">
-                        <label for="gallery" class="form-label">Thêm ảnh vào thư viện</label>
-                        <input type="file" class="form-control @error('gallery') is-invalid @enderror" 
-                               id="gallery" name="gallery[]" accept="image/*" multiple>
-                        @error('gallery')
+                        <label for="images" class="form-label">Thêm hình ảnh mới</label>
+                        <input type="file" class="form-control @error('images.*') is-invalid @enderror" 
+                               id="images" name="images[]" accept="image/*" multiple>
+                        @error('images.*')
                         <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
-                        <div class="form-text">Có thể chọn nhiều ảnh cùng lúc. Tối đa 10 ảnh, mỗi ảnh tối đa 2MB.</div>
-                    </div>
-
-                    <!-- Preview area -->
+                        <div class="form-text">Có thể chọn nhiều ảnh cùng lúc. Chỉ chấp nhận file: jpeg, png, jpg, gif. Tối đa 2MB mỗi ảnh.</div>
+                    </div>                    <!-- Preview area -->
                     <div id="image-preview" class="row mt-3"></div>
                 </div>
             </div>
@@ -413,20 +393,36 @@
 @push('scripts')
 <script>
 // Image preview functionality
-document.getElementById('image').addEventListener('change', function() {
-    previewImage(this, 'main-image-preview');
+document.getElementById('images').addEventListener('change', function() {
+    previewImages(this, 'image-preview');
 });
 
-document.getElementById('gallery').addEventListener('change', function() {
-    previewGallery(this, 'gallery-preview');
-});
-
-function previewImage(input, containerId) {
-    const container = document.getElementById(containerId) || createPreviewContainer(containerId);
+function previewImages(input, containerId) {
+    const container = document.getElementById(containerId);
     container.innerHTML = '';
     
-    if (input.files && input.files[0]) {
-        const reader = new FileReader();
+    if (input.files) {
+        Array.from(input.files).forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const col = document.createElement('div');
+                col.className = 'col-md-3 mb-2';
+                col.innerHTML = `
+                    <div class="position-relative">
+                        <img src="${e.target.result}" alt="Preview ${index + 1}" 
+                             class="img-thumbnail w-100" style="height: 150px; object-fit: cover;">
+                        <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0"
+                                onclick="this.closest('.col-md-3').remove()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(col);
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+}
         reader.onload = function(e) {
             const img = document.createElement('img');
             img.src = e.target.result;
@@ -502,6 +498,32 @@ function calculateProfit() {
         
         // You can display this somewhere if needed
         console.log(`Lợi nhuận: ${profit.toLocaleString()}đ (${margin}%)`);
+    }
+}
+
+// Function to remove product image
+function removeProductImage(index) {
+    if (confirm('Bạn có chắc chắn muốn xóa ảnh này?')) {
+        // Send AJAX request to remove image
+        fetch(`/admin/products/{{ $product->id }}/remove-image/${index}`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload(); // Reload to show updated images
+            } else {
+                alert('Có lỗi xảy ra khi xóa ảnh!');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Có lỗi xảy ra khi xóa ảnh!');
+        });
     }
 }
 </script>

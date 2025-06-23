@@ -31,12 +31,13 @@ Route::post('/contact', [HomeController::class, 'contactStore'])->name('client.c
 Route::get('/login', [ClientAuthController::class, 'showLoginForm'])->name('login'); // Laravel auth default
 Route::post('/login', [ClientAuthController::class, 'login'])->name('login.post');
 Route::get('/client-login', [ClientAuthController::class, 'showLoginForm'])->name('client.login'); // Client specific (redirect tới login)
+Route::get('/client-auth-login', [ClientAuthController::class, 'showLoginForm'])->name('client.auth.login'); // Alternative route name
 Route::get('/register', [ClientAuthController::class, 'showRegisterForm'])->name('client.register');
 Route::post('/register', [ClientAuthController::class, 'register']);
 Route::post('/logout', [ClientAuthController::class, 'logout'])->name('client.logout');
 
 // Protected Client Routes
-Route::middleware('auth')->group(function () {
+Route::middleware('auth:web')->group(function () {
     Route::get('/profile', [ProfileController::class, 'index'])->name('client.profile');
     Route::get('/profile/show', [ProfileController::class, 'show'])->name('client.profile.show');
     Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('client.profile.edit');
@@ -53,14 +54,14 @@ Route::get('/terms', function () { return view('client.terms'); })->name('client
 Route::get('/privacy', function () { return view('client.privacy'); })->name('client.privacy');
 Route::get('/password/reset', function () { return view('client.auth.passwords.email'); })->name('client.password.request');
 // Wishlist routes
-Route::middleware('auth')->group(function () {
+Route::middleware('auth:web')->group(function () {
     Route::get('/wishlist', [WishlistController::class, 'index'])->name('client.wishlist');
     Route::post('/wishlist/add/{product}', [WishlistController::class, 'add'])->name('client.wishlist.add');
     Route::delete('/wishlist/remove/{product}', [WishlistController::class, 'remove'])->name('client.wishlist.remove');
 });
 
 // Reviews routes  
-Route::middleware('auth')->group(function () {
+Route::middleware('auth:web')->group(function () {
     Route::get('/reviews', [ReviewController::class, 'index'])->name('client.reviews');
     Route::post('/products/{product}/reviews', [ReviewController::class, 'store'])->name('client.reviews.store');
     Route::put('/reviews/{review}', [ReviewController::class, 'update'])->name('client.reviews.update');
@@ -88,7 +89,7 @@ Route::post('/checkout', [ClientOrderController::class, 'store'])->name('client.
 Route::get('/order-success/{order}', [ClientOrderController::class, 'success'])->name('client.order.success');
 
 // User Orders (require auth)
-Route::middleware('auth')->group(function () {
+Route::middleware('auth:web')->group(function () {
     Route::get('/my-orders', [ClientOrderController::class, 'myOrders'])->name('client.orders.index');
     Route::get('/orders/{order}', [ClientOrderController::class, 'show'])->name('client.orders.show');
 });
@@ -110,7 +111,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::post('logout', [AuthController::class, 'logout'])->name('logout');
 
     // Protected admin routes
-    Route::middleware(['auth', 'admin'])->group(function () {
+    Route::middleware(['auth:admin', 'admin'])->group(function () {
         Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
         
         // Categories
@@ -118,9 +119,11 @@ Route::prefix('admin')->name('admin.')->group(function () {
         
         // Products
         Route::resource('products', ProductController::class);
+        Route::post('products/{product}/duplicate', [ProductController::class, 'duplicate'])->name('products.duplicate');
         Route::patch('products/{product}/toggle-status', [ProductController::class, 'toggleStatus'])->name('products.toggle-status');
         Route::post('products/bulk-action', [ProductController::class, 'bulkAction'])->name('products.bulk-action');
         Route::get('products/export', [ProductController::class, 'export'])->name('products.export');
+        Route::delete('products/{product}/remove-image/{index}', [ProductController::class, 'removeImage'])->name('products.remove-image');
 
         // Orders
         Route::resource('orders', OrderController::class);
@@ -145,4 +148,33 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::patch('coupons/{coupon}/toggle-status', [CouponController::class, 'toggleStatus'])->name('coupons.toggle-status');
         Route::post('coupons/bulk-action', [CouponController::class, 'bulkAction'])->name('coupons.bulk-action');
     });
+});
+
+// Debug route
+Route::get('/admin/dashboard-test', function() {
+    $output = "<h1>Dashboard Debug Test</h1>";
+    
+    try {
+        $output .= "<h3>Raw SQL:</h3>";
+        $output .= "Total orders: " . \DB::table('orders')->count() . "<br>";
+        $output .= "Pending orders: " . \DB::table('orders')->where('status', 'pending')->count() . "<br>";
+        $output .= "Delivered orders: " . \DB::table('orders')->where('status', 'delivered')->count() . "<br>";
+        $output .= "Revenue: " . \DB::table('orders')->where('payment_status', 'paid')->sum('total_amount') . "<br>";
+        
+        $output .= "<h3>Eloquent:</h3>";
+        $output .= "Total orders: " . \App\Models\Order::count() . "<br>";
+        $output .= "Pending orders: " . \App\Models\Order::where('status', 'pending')->count() . "<br>";
+        $output .= "Delivered orders: " . \App\Models\Order::where('status', 'delivered')->count() . "<br>";
+        $output .= "Revenue: " . \App\Models\Order::where('payment_status', 'paid')->sum('total_amount') . "<br>";
+        
+        $output .= "<h3>Database Connection:</h3>";
+        $output .= "Connection: " . config('database.default') . "<br>";
+        $output .= "Database: " . config('database.connections.mysql.database') . "<br>";
+        
+    } catch (Exception $e) {
+        $output .= "<h3>ERROR:</h3>";
+        $output .= $e->getMessage() . "<br>";
+    }
+    
+    return $output;
 });
