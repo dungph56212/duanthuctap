@@ -66,8 +66,7 @@
                             @enderror
                         </div>
 
-                        <!-- Enhanced Address Form Component -->
-                        @component('components.enhanced-address-form', [
+                        <!-- Enhanced Address Form Component -->                        @component('components.enhanced-address-form', [
                             'prefix' => 'shipping_',
                             'defaultName' => auth()->user()->name ?? '',
                             'defaultPhone' => auth()->user()->phone ?? '',
@@ -87,45 +86,6 @@
                                           rows="3" 
                                           placeholder="Ghi chú về đơn hàng, yêu cầu đặc biệt (tùy chọn)">{{ old('notes') }}</textarea>
                             </div>
-                        </div>
-                    </div>
-                </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="quan" class="form-label">Quận/Huyện <span class="text-danger">*</span></label>
-                                <select class="form-select" id="quan" name="quan" required>
-                                    <option value="">Chọn Quận/Huyện</option>
-                                </select>
-                                <input type="hidden" id="ten_quan" name="ten_quan">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="phuong" class="form-label">Phường/Xã <span class="text-danger">*</span></label>
-                                <select class="form-select" id="phuong" name="phuong" required>
-                                    <option value="">Chọn Phường/Xã</option>
-                                </select>
-                                <input type="hidden" id="ten_phuong" name="ten_phuong">
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="address" class="form-label">Địa chỉ cụ thể <span class="text-danger">*</span></label>
-                            <input type="text" 
-                                   class="form-control @error('address') is-invalid @enderror" 
-                                   id="address" 
-                                   name="address" 
-                                   value="{{ old('address') }}" 
-                                   placeholder="Số nhà, tên đường, phường/xã, quận/huyện" 
-                                   required>
-                            @error('address')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-                        <div class="mb-3">
-                            <label for="notes" class="form-label">Ghi chú đơn hàng</label>
-                            <textarea class="form-control" 
-                                      id="notes" 
-                                      name="notes" 
-                                      rows="3" 
-                                      placeholder="Ghi chú về đơn hàng (tùy chọn)">{{ old('notes') }}</textarea>
                         </div>
                     </div>
                 </div>
@@ -498,9 +458,7 @@ document.addEventListener('DOMContentLoaded', function() {
         toastElement.addEventListener('hidden.bs.toast', function() {
             toastElement.remove();
         });
-    }
-
-    // Apply coupon
+    }    // Apply coupon
     document.getElementById('apply-coupon').addEventListener('click', function() {
         const couponCode = document.getElementById('coupon_code').value;
         const resultDiv = document.getElementById('coupon-result');
@@ -509,14 +467,12 @@ document.addEventListener('DOMContentLoaded', function() {
             resultDiv.innerHTML = '<div class="alert alert-warning alert-sm">Vui lòng nhập mã giảm giá</div>';
             return;
         }
-            return;
-        }
 
         // Show loading
         this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Đang xử lý...';
-        this.disabled = true;
-
-        // Make AJAX request
+        this.disabled = true;        // Make AJAX request
+        console.log('Sending coupon request...', couponCode);
+        
         fetch('{{ route("client.checkout.apply-coupon") }}', {
             method: 'POST',
             headers: {
@@ -528,8 +484,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 subtotal: {{ $subtotal }}
             })
         })
-        .then(response => response.json())
+        .then(response => {
+            console.log('Response status:', response.status);
+            return response.json();
+        })
         .then(data => {
+            console.log('Response data:', data);
             if (data.success) {
                 // Update discount
                 const discountAmount = data.discount;
@@ -544,9 +504,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 resultDiv.innerHTML = '<div class="alert alert-success alert-sm">Áp dụng mã giảm giá thành công!</div>';
             } else {
                 resultDiv.innerHTML = '<div class="alert alert-danger alert-sm">' + data.message + '</div>';
-            }
-        })
+            }        })
         .catch(error => {
+            console.error('Coupon request error:', error);
             resultDiv.innerHTML = '<div class="alert alert-danger alert-sm">Có lỗi xảy ra, vui lòng thử lại</div>';
         })
         .finally(() => {

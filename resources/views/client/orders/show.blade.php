@@ -226,22 +226,22 @@
                         <i class="fas fa-shipping-fast me-2 text-primary"></i>
                         Thông tin giao hàng
                     </h5>
-                </div>
-                <div class="card-body">                    <div class="mb-3">
+                </div>                <div class="card-body">
+                    <div class="mb-3">
                         <strong>Người nhận:</strong>
-                        <div>{{ is_array($order->shipping_address) ? ($order->shipping_address['name'] ?? 'N/A') : 'N/A' }}</div>
+                        <div>{{ $order->shipping_address['name'] ?? 'N/A' }}</div>
                     </div>
                     <div class="mb-3">
                         <strong>Số điện thoại:</strong>
-                        <div>{{ is_array($order->shipping_address) ? ($order->shipping_address['phone'] ?? 'N/A') : 'N/A' }}</div>
+                        <div>{{ $order->shipping_address['phone'] ?? 'N/A' }}</div>
                     </div>
                     <div class="mb-3">
                         <strong>Email:</strong>
-                        <div>{{ is_array($order->shipping_address) ? ($order->shipping_address['email'] ?? 'N/A') : 'N/A' }}</div>
+                        <div>{{ $order->shipping_address['email'] ?? 'N/A' }}</div>
                     </div>
                     <div class="mb-3">
                         <strong>Địa chỉ:</strong>
-                        <div>{{ is_array($order->shipping_address) ? ($order->shipping_address['address'] ?? 'N/A') : 'N/A' }}</div>
+                        <div>{{ $order->shipping_address['address'] ?? 'N/A' }}</div>
                     </div>
                     @if($order->notes)
                         <div>

@@ -29,9 +29,8 @@
                     <div class="col-lg-6 mb-4">
                         <div class="card border-0 shadow-sm {{ $address->is_default ? 'border-primary' : '' }}">
                             <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h6 class="mb-0">
-                                        @if($address->type === 'shipping')
+                                <div>                                    <h6 class="mb-0">
+                                        @if($address->type === 'Giao hàng')
                                             <i class="fas fa-shipping-fast text-primary"></i> Địa chỉ giao hàng
                                         @else
                                             <i class="fas fa-credit-card text-success"></i> Địa chỉ thanh toán
@@ -72,14 +71,13 @@
                                     </ul>
                                 </div>
                             </div>
-                            <div class="card-body">
-                                <h6 class="mb-2">{{ $address->name }}</h6>
+                            <div class="card-body">                                <h6 class="mb-2">{{ $address->first_name }} {{ $address->last_name }}</h6>
                                 <p class="text-muted mb-2">
                                     <i class="fas fa-phone"></i> {{ $address->phone }}
                                 </p>
                                 <p class="text-muted mb-0">
                                     <i class="fas fa-map-marker-alt"></i> 
-                                    {{ $address->address_line }}, {{ $address->ward }}, {{ $address->district }}, {{ $address->province }}
+                                    {{ $address->address_line_1 }}, {{ $address->city }}, {{ $address->state }}, {{ $address->country }}
                                 </p>
                             </div>
                         </div>

@@ -29,6 +29,10 @@ return new class extends Migration
             $table->text('notes')->nullable();
             $table->timestamp('shipped_at')->nullable();
             $table->timestamp('delivered_at')->nullable();
+            $table->timestamp('cancelled_at')->nullable();
+            $table->string('cancelled_reason')->nullable();
+            $table->foreignId('coupon_id')->nullable()->constrained('coupons')->onDelete('set null');
+            $table->decimal('coupon_discount', 10, 2)->default(0);
             $table->timestamps();
             
             $table->index(['user_id', 'status']);

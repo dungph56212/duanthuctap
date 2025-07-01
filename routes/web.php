@@ -5,7 +5,7 @@ use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\ProductController;
-use App\Http\Controllers\Admin\OrderController;
+use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\CouponController;
 
@@ -13,7 +13,7 @@ use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Client\HomeController;
 use App\Http\Controllers\Client\ProductController as ClientProductController;
 use App\Http\Controllers\Client\CartController;
-use App\Http\Controllers\Client\OrderController as ClientOrderController;
+use App\Http\Controllers\Client\OrderController;
 use App\Http\Controllers\Client\AuthController as ClientAuthController;
 use App\Http\Controllers\Client\ChatBotController;
 use App\Http\Controllers\Client\ProfileController;
@@ -83,15 +83,16 @@ Route::delete('/cart', [CartController::class, 'clear'])->name('client.cart.clea
 Route::get('/cart/count', [CartController::class, 'count'])->name('client.cart.count');
 
 // Checkout & Orders
-Route::get('/checkout', [ClientOrderController::class, 'checkout'])->name('client.checkout');
-Route::post('/checkout/apply-coupon', [ClientOrderController::class, 'applyCoupon'])->name('client.checkout.apply-coupon');
-Route::post('/checkout', [ClientOrderController::class, 'store'])->name('client.checkout.store');
-Route::get('/order-success/{order}', [ClientOrderController::class, 'success'])->name('client.order.success');
+Route::get('/checkout', [OrderController::class, 'checkout'])->name('client.checkout');
+Route::post('/checkout/apply-coupon', [OrderController::class, 'applyCoupon'])->name('client.checkout.apply-coupon');
+Route::post('/checkout', [OrderController::class, 'store'])->name('client.checkout.store');
+Route::get('/order-success/{order}', [OrderController::class, 'success'])->name('client.order.success');
 
 // User Orders (require auth)
 Route::middleware('auth:web')->group(function () {
-    Route::get('/my-orders', [ClientOrderController::class, 'myOrders'])->name('client.orders.index');
-    Route::get('/orders/{order}', [ClientOrderController::class, 'show'])->name('client.orders.show');
+    Route::get('/my-orders', [OrderController::class, 'myOrders'])->name('client.orders.index');
+    Route::get('/orders/{order}', [OrderController::class, 'show'])->name('client.orders.show');
+    Route::patch('/orders/{order}/cancel', [OrderController::class, 'cancel'])->name('client.orders.cancel');
 });
 
 // Chatbot Routes (public access)
@@ -126,14 +127,14 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::delete('products/{product}/remove-image/{index}', [ProductController::class, 'removeImage'])->name('products.remove-image');
 
         // Orders
-        Route::resource('orders', OrderController::class);
-        Route::patch('orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.update-status');
-        Route::patch('orders/{order}/payment-status', [OrderController::class, 'updatePaymentStatus'])->name('orders.update-payment-status');
-        Route::patch('orders/{order}/mark-paid', [OrderController::class, 'markPaid'])->name('orders.mark-paid');
-        Route::patch('orders/{order}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');
-        Route::get('orders/{order}/print', [OrderController::class, 'print'])->name('orders.print');
-        Route::post('orders/bulk-action', [OrderController::class, 'bulkAction'])->name('orders.bulk-action');
-        Route::get('orders/check-new', [OrderController::class, 'checkNew'])->name('orders.check-new');
+        Route::resource('orders', AdminOrderController::class);
+        Route::patch('orders/{order}/status', [AdminOrderController::class, 'updateStatus'])->name('orders.update-status');
+        Route::patch('orders/{order}/payment-status', [AdminOrderController::class, 'updatePaymentStatus'])->name('orders.update-payment-status');
+        Route::patch('orders/{order}/mark-paid', [AdminOrderController::class, 'markPaid'])->name('orders.mark-paid');
+        Route::patch('orders/{order}/cancel', [AdminOrderController::class, 'cancel'])->name('orders.cancel');
+        Route::get('orders/{order}/print', [AdminOrderController::class, 'print'])->name('orders.print');
+        Route::post('orders/bulk-action', [AdminOrderController::class, 'bulkAction'])->name('orders.bulk-action');
+        Route::get('orders/check-new', [AdminOrderController::class, 'checkNew'])->name('orders.check-new');
         
         // Users
         Route::resource('users', UserController::class);

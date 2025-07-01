@@ -129,14 +129,8 @@
 
                             <!-- Order Info -->
                             <div class="row">
-                                <div class="col-md-6">
-                                    <div class="mb-2">
-                                        <strong>Giao đến:</strong>
-                                        <div class="text-muted">
-                                            {{ $order->shipping_name }}<br>
-                                            {{ $order->shipping_address }}, {{ $order->shipping_city }}<br>
-                                            {{ $order->shipping_phone }}
-                                        </div>
+                                <div class="col-md-6">                                    <div class="mb-2">
+
                                     </div>
                                 </div>
                                 <div class="col-md-6 text-md-end">
@@ -233,10 +227,14 @@
 <script>
 function cancelOrder(orderId) {
     if (confirm('Bạn có chắc chắn muốn hủy đơn hàng này?')) {
-        // Here you can implement the cancel order functionality
-        // For example, make an AJAX request to cancel the order
+        // Show loading
+        const cancelBtn = document.querySelector(`[onclick="cancelOrder(${orderId})"]`);
+        const originalText = cancelBtn.innerHTML;
+        cancelBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Đang hủy...';
+        cancelBtn.disabled = true;
+
         fetch(`/orders/${orderId}/cancel`, {
-            method: 'POST',
+            method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
@@ -245,15 +243,63 @@ function cancelOrder(orderId) {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                location.reload();
+                // Show success message
+                showToast(data.message, 'success');
+                
+                // Reload page after 1 second
+                setTimeout(() => {
+                    if (data.redirect) {
+                        window.location.href = data.redirect;
+                    } else {
+                        location.reload();
+                    }
+                }, 1000);
             } else {
-                alert('Có lỗi xảy ra, vui lòng thử lại.');
+                showToast(data.message || 'Có lỗi xảy ra, vui lòng thử lại.', 'error');
+                // Restore button
+                cancelBtn.innerHTML = originalText;
+                cancelBtn.disabled = false;
             }
         })
         .catch(error => {
-            alert('Có lỗi xảy ra, vui lòng thử lại.');
+            console.error('Error:', error);
+            showToast('Có lỗi xảy ra, vui lòng thử lại.', 'error');
+            // Restore button
+            cancelBtn.innerHTML = originalText;
+            cancelBtn.disabled = false;
         });
     }
+}
+
+// Toast notification function
+function showToast(message, type = 'info') {
+    const toastHtml = `
+        <div class="toast align-items-center text-white bg-${type === 'info' ? 'primary' : type === 'error' ? 'danger' : 'success'} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">
+                    ${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    `;
+    
+    let toastContainer = document.querySelector('.toast-container');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+        document.body.appendChild(toastContainer);
+    }
+    
+    toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+    const toastElement = toastContainer.lastElementChild;
+    const toast = new bootstrap.Toast(toastElement, { delay: 5000 });
+    toast.show();
+    
+    // Remove element after hide
+    toastElement.addEventListener('hidden.bs.toast', function() {
+        toastElement.remove();
+    });
 }
 
 function reviewOrder(orderId) {

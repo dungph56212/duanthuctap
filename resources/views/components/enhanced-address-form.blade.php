@@ -32,26 +32,24 @@
                                        name="{{ $prefix }}selected_address_id" 
                                        id="{{ $prefix }}addr_{{ $address->id }}" 
                                        value="{{ $address->id }}"
-                                       {{ $loop->first ? 'checked' : '' }}
-                                       data-name="{{ $address->name }}"
+                                       {{ $loop->first ? 'checked' : '' }}                                       data-name="{{ $address->first_name }} {{ $address->last_name }}"
                                        data-phone="{{ $address->phone }}"
-                                       data-province="{{ $address->ten_tinh }}"
-                                       data-district="{{ $address->ten_quan }}"
-                                       data-ward="{{ $address->ten_phuong }}"
-                                       data-address-line="{{ $address->address_line }}"
+                                       data-province="{{ $address->country }}"
+                                       data-district="{{ $address->state }}"
+                                       data-ward="{{ $address->city }}"
+                                       data-address-line="{{ $address->address_line_1 }}"
                                        data-type="{{ $address->type }}">
                                 <label class="btn btn-outline-secondary w-100 text-start address-label" for="{{ $prefix }}addr_{{ $address->id }}">
                                     <div class="d-flex justify-content-between align-items-start">
-                                        <div class="flex-grow-1">
-                                            <div class="fw-bold d-flex align-items-center">
-                                                {{ $address->name }}
+                                        <div class="flex-grow-1">                                            <div class="fw-bold d-flex align-items-center">
+                                                {{ $address->first_name }} {{ $address->last_name }}
                                                 @if($address->is_default)
                                                     <span class="badge bg-warning text-dark ms-2">
                                                         <i class="fas fa-star"></i> Mặc định
                                                     </span>
                                                 @endif
                                                 <span class="badge bg-info ms-2">
-                                                    {{ $address->type == 'shipping' ? 'Giao hàng' : 'Thanh toán' }}
+                                                    {{ $address->type == 'Giao hàng' ? 'Giao hàng' : 'Thanh toán' }}
                                                 </span>
                                             </div>
                                             <div class="text-muted small mt-1">
@@ -59,7 +57,7 @@
                                             </div>
                                             <div class="text-muted small">
                                                 <i class="fas fa-map-marker-alt me-1"></i>
-                                                {{ $address->address_line }}, {{ $address->ten_phuong }}, {{ $address->ten_quan }}, {{ $address->ten_tinh }}
+                                                {{ $address->address_line_1 }}, {{ $address->city }}, {{ $address->state }}, {{ $address->country }}
                                             </div>
                                         </div>
                                         <button type="button" 
@@ -113,10 +111,32 @@
                     <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
             </div>
+        </div>        <!-- Address Input Mode Selection -->
+        <div class="mb-3">
+            <div class="btn-group w-100" role="group">
+                <input type="radio" 
+                       class="btn-check" 
+                       name="{{ $prefix }}input_mode" 
+                       id="{{ $prefix }}dropdown_mode" 
+                       value="dropdown" 
+                       checked>
+                <label class="btn btn-outline-primary" for="{{ $prefix }}dropdown_mode">
+                    <i class="fas fa-list me-2"></i>Chọn từ danh sách
+                </label>
+
+                <input type="radio" 
+                       class="btn-check" 
+                       name="{{ $prefix }}input_mode" 
+                       id="{{ $prefix }}manual_mode" 
+                       value="manual">
+                <label class="btn btn-outline-success" for="{{ $prefix }}manual_mode">
+                    <i class="fas fa-keyboard me-2"></i>Nhập tay
+                </label>
+            </div>
         </div>
 
-        <!-- Address Selection with Smart Search -->
-        <div class="address-selector mb-4">
+        <!-- Address Selection with Smart Search (Dropdown Mode) -->
+        <div class="address-selector mb-4" id="{{ $prefix }}dropdown_container">
             <div class="row">
                 <div class="col-md-4 mb-3">
                     <label for="{{ $prefix }}province" class="form-label">Tỉnh/Thành phố <span class="text-danger">*</span></label>
@@ -158,6 +178,60 @@
                         <option value="">Chọn Phường/Xã</option>
                     </select>
                     @error($prefix.'ward')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+            </div>
+        </div>
+
+        <!-- Manual Address Input -->
+        <div class="manual-address-input mb-4" id="{{ $prefix }}manual_container" style="display: none;">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label for="{{ $prefix }}province_manual" class="form-label">Tỉnh/Thành phố <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-map-marked-alt"></i></span>
+                        <input type="text" 
+                               class="form-control @error($prefix.'province_manual') is-invalid @enderror" 
+                               id="{{ $prefix }}province_manual" 
+                               name="{{ $prefix }}province_manual" 
+                               value="{{ old($prefix.'province_manual') }}" 
+                               placeholder="Ví dụ: Hà Nội, TP. Hồ Chí Minh..."
+                               disabled>
+                    </div>
+                    @error($prefix.'province_manual')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="{{ $prefix }}district_manual" class="form-label">Quận/Huyện <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-building"></i></span>
+                        <input type="text" 
+                               class="form-control @error($prefix.'district_manual') is-invalid @enderror" 
+                               id="{{ $prefix }}district_manual" 
+                               name="{{ $prefix }}district_manual" 
+                               value="{{ old($prefix.'district_manual') }}" 
+                               placeholder="Ví dụ: Quận 1, Huyện Gia Lâm..."
+                               disabled>
+                    </div>
+                    @error($prefix.'district_manual')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="{{ $prefix }}ward_manual" class="form-label">Phường/Xã <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-home"></i></span>
+                        <input type="text" 
+                               class="form-control @error($prefix.'ward_manual') is-invalid @enderror" 
+                               id="{{ $prefix }}ward_manual" 
+                               name="{{ $prefix }}ward_manual" 
+                               value="{{ old($prefix.'ward_manual') }}" 
+                               placeholder="Ví dụ: Phường Bến Nghé, Xã Dương Hà..."
+                               disabled>
+                    </div>
+                    @error($prefix.'ward_manual')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
@@ -321,4 +395,195 @@
         transform: translateY(0);
     }
 }
+
+.manual-address-input {
+    transition: all 0.3s ease;
+}
+
+.manual-address-input input {
+    background-color: #f8f9fa;
+}
+
+.manual-address-input input:enabled {
+    background-color: #ffffff;
+}
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const prefix = '{{ $prefix }}';
+    console.log('Initializing address form with prefix:', prefix);
+    
+    // Xử lý chuyển đổi giữa "Chọn có sẵn" và "Thêm mới"
+    const existingModeBtn = document.getElementById(prefix + 'existing');
+    const newModeBtn = document.getElementById(prefix + 'new');
+    const existingAddresses = document.getElementById(prefix + 'existing_addresses');
+    const newAddressForm = document.getElementById(prefix + 'new_address_form');
+    
+    console.log('Found elements:', {
+        existingModeBtn,
+        newModeBtn,
+        existingAddresses,
+        newAddressForm
+    });
+    
+    if (existingModeBtn && newModeBtn) {
+        existingModeBtn.addEventListener('change', function() {
+            console.log('Existing mode selected');
+            if (this.checked) {
+                if (existingAddresses) existingAddresses.style.display = 'block';
+                if (newAddressForm) newAddressForm.style.display = 'none';
+            }
+        });
+
+        newModeBtn.addEventListener('change', function() {
+            console.log('New mode selected');
+            if (this.checked) {
+                if (existingAddresses) existingAddresses.style.display = 'none';
+                if (newAddressForm) newAddressForm.style.display = 'block';
+            }
+        });
+    }
+    
+    // Xử lý chuyển đổi giữa chế độ dropdown và nhập tay
+    const dropdownMode = document.getElementById(prefix + 'dropdown_mode');
+    const manualMode = document.getElementById(prefix + 'manual_mode');
+    const dropdownContainer = document.getElementById(prefix + 'dropdown_container');
+    const manualContainer = document.getElementById(prefix + 'manual_container');
+    
+    function toggleInputMode() {
+        console.log('Toggling input mode, manual mode checked:', manualMode?.checked);
+        
+        if (manualMode && manualMode.checked) {
+            // Chế độ nhập tay
+            if (dropdownContainer) dropdownContainer.style.display = 'none';
+            if (manualContainer) manualContainer.style.display = 'block';
+            
+            // Disable dropdown fields
+            const provinceSelect = document.getElementById(prefix + 'province');
+            const districtSelect = document.getElementById(prefix + 'district');
+            const wardSelect = document.getElementById(prefix + 'ward');
+            
+            if (provinceSelect) {
+                provinceSelect.disabled = true;
+                provinceSelect.required = false;
+            }
+            if (districtSelect) {
+                districtSelect.disabled = true;
+                districtSelect.required = false;
+            }
+            if (wardSelect) {
+                wardSelect.disabled = true;
+                wardSelect.required = false;
+            }
+            
+            // Enable manual fields
+            const provinceManual = document.getElementById(prefix + 'province_manual');
+            const districtManual = document.getElementById(prefix + 'district_manual');
+            const wardManual = document.getElementById(prefix + 'ward_manual');
+            
+            if (provinceManual) {
+                provinceManual.disabled = false;
+                provinceManual.required = true;
+            }
+            if (districtManual) {
+                districtManual.disabled = false;
+                districtManual.required = true;
+            }
+            if (wardManual) {
+                wardManual.disabled = false;
+                wardManual.required = true;
+            }
+        } else {
+            // Chế độ dropdown
+            if (dropdownContainer) dropdownContainer.style.display = 'block';
+            if (manualContainer) manualContainer.style.display = 'none';
+            
+            // Enable dropdown fields
+            const provinceSelect = document.getElementById(prefix + 'province');
+            const districtSelect = document.getElementById(prefix + 'district');
+            const wardSelect = document.getElementById(prefix + 'ward');
+            
+            if (provinceSelect) {
+                provinceSelect.disabled = false;
+                provinceSelect.required = true;
+            }
+            if (districtSelect) {
+                districtSelect.required = true;
+            }
+            if (wardSelect) {
+                wardSelect.required = true;
+            }
+            
+            // Disable manual fields
+            const provinceManual = document.getElementById(prefix + 'province_manual');
+            const districtManual = document.getElementById(prefix + 'district_manual');
+            const wardManual = document.getElementById(prefix + 'ward_manual');
+            
+            if (provinceManual) {
+                provinceManual.disabled = true;
+                provinceManual.required = false;
+            }
+            if (districtManual) {
+                districtManual.disabled = true;
+                districtManual.required = false;
+            }
+            if (wardManual) {
+                wardManual.disabled = true;
+                wardManual.required = false;
+            }
+        }
+    }
+    
+    // Gắn sự kiện cho các radio button
+    if (dropdownMode) {
+        dropdownMode.addEventListener('change', toggleInputMode);
+    }
+    if (manualMode) {
+        manualMode.addEventListener('change', toggleInputMode);
+    }
+    
+    // Khởi tạo trạng thái ban đầu
+    toggleInputMode();
+    
+    // Cập nhật preview khi nhập tay
+    const manualInputs = [
+        prefix + 'province_manual',
+        prefix + 'district_manual', 
+        prefix + 'ward_manual',
+        prefix + 'address_line'
+    ];
+    
+    manualInputs.forEach(function(inputId) {
+        const input = document.getElementById(inputId);
+        if (input) {
+            input.addEventListener('input', updateAddressPreview);
+        }
+    });
+    
+    function updateAddressPreview() {
+        const preview = document.getElementById(prefix + 'address_preview');
+        const previewContent = document.getElementById(prefix + 'preview_content');
+        
+        if (manualMode && manualMode.checked) {
+            const province = document.getElementById(prefix + 'province_manual')?.value || '';
+            const district = document.getElementById(prefix + 'district_manual')?.value || '';
+            const ward = document.getElementById(prefix + 'ward_manual')?.value || '';
+            const addressLine = document.getElementById(prefix + 'address_line')?.value || '';
+            
+            if (province || district || ward || addressLine) {
+                let addressText = '';
+                if (addressLine) addressText += addressLine + ', ';
+                if (ward) addressText += ward + ', ';
+                if (district) addressText += district + ', ';
+                if (province) addressText += province;
+                
+                if (previewContent) previewContent.innerHTML = addressText;
+                if (preview) preview.style.display = 'block';
+            } else {
+                if (preview) preview.style.display = 'none';
+            }
+        }
+    }
+});
+</script>

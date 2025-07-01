@@ -24,40 +24,63 @@ class AddressController extends Controller
     public function create()
     {
         return view('client.addresses.create');
-    }
-
-    /**
+    }    /**
      * Store a newly created address in storage.
      */
     public function store(Request $request)
-    {
-        $request->validate([
-            'type' => 'required|in:shipping,billing',
+    {        // Validation linh hoạt theo input_mode
+        $rules = [
+            'type' => 'required|in:Giao hàng,Thanh toán',
             'name' => 'required|string|max:255',
             'phone' => 'required|string|max:20',
             'address_line' => 'required|string|max:500',
-            'ten_phuong' => 'required|string|max:100',
-            'ten_quan' => 'required|string|max:100',
-            'ten_tinh' => 'required|string|max:100',
             'is_default' => 'boolean'
-        ]);
+        ];
+
+        // Nếu chọn từ danh sách
+        if ($request->input_mode === 'select') {
+            $rules['ten_phuong'] = 'required|string|max:100';
+            $rules['ten_quan'] = 'required|string|max:100';
+            $rules['ten_tinh'] = 'required|string|max:100';
+        } else {
+            // Nếu nhập tay
+            $rules['manual_ten_phuong'] = 'required|string|max:100';
+            $rules['manual_ten_quan'] = 'required|string|max:100';
+            $rules['manual_ten_tinh'] = 'required|string|max:100';
+        }
+
+        $request->validate($rules);
 
         // If this is set as default, remove default from other addresses of same type
         if ($request->is_default) {
             Auth::user()->addresses()
                 ->where('type', $request->type)
                 ->update(['is_default' => false]);
+        }        // Xử lý địa chỉ từ danh sách hoặc nhập tay
+        if ($request->input_mode === 'select') {
+            $city = $request->ten_phuong;  // ward -> city
+            $state = $request->ten_quan;   // district -> state
+            $country = $request->ten_tinh; // province -> country
+        } else {
+            $city = $request->manual_ten_phuong;
+            $state = $request->manual_ten_quan;
+            $country = $request->manual_ten_tinh;
         }
 
-        $address = new Address([
+        // Tách tên thành first_name và last_name
+        $nameParts = explode(' ', trim($request->name), 2);
+        $firstName = $nameParts[0];
+        $lastName = isset($nameParts[1]) ? $nameParts[1] : '';        $address = new Address([
             'user_id' => Auth::id(),
             'type' => $request->type,
-            'name' => $request->name,
+            'first_name' => $firstName,
+            'last_name' => $lastName,
             'phone' => $request->phone,
-            'address_line' => $request->address_line,
-            'ward' => $request->ten_phuong,
-            'district' => $request->ten_quan,
-            'province' => $request->ten_tinh,
+            'address_line_1' => $request->address_line,
+            'city' => $city,
+            'state' => $state,
+            'country' => $country,
+            'postal_code' => '10000', // Mã bưu điện mặc định
             'is_default' => $request->is_default ?? false
         ]);
 
