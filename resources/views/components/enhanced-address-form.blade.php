@@ -91,8 +91,7 @@
                        id="{{ $prefix }}name" 
                        name="{{ $prefix }}name" 
                        value="{{ old($prefix.'name', $defaultName ?? '') }}" 
-                       placeholder="Nhập họ và tên"
-                       required>
+                       placeholder="Nhập họ và tên">
                 @error($prefix.'name')
                     <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
@@ -144,8 +143,7 @@
                             id="{{ $prefix }}province" 
                             name="{{ $prefix }}province" 
                             data-target="district"
-                            data-prefix="{{ $prefix }}"
-                            required>
+                            data-prefix="{{ $prefix }}">
                         <option value="">Chọn Tỉnh/Thành phố</option>
                     </select>
                     @error($prefix.'province')
@@ -159,8 +157,7 @@
                             name="{{ $prefix }}district" 
                             data-target="ward"
                             data-prefix="{{ $prefix }}"
-                            disabled
-                            required>
+                            disabled>
                         <option value="">Chọn Quận/Huyện</option>
                     </select>
                     @error($prefix.'district')
@@ -173,8 +170,7 @@
                             id="{{ $prefix }}ward" 
                             name="{{ $prefix }}ward" 
                             data-prefix="{{ $prefix }}"
-                            disabled
-                            required>
+                            disabled>
                         <option value="">Chọn Phường/Xã</option>
                     </select>
                     @error($prefix.'ward')
